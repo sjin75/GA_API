@@ -57,7 +57,7 @@ def get_report(analytics, view_id , date):
   ).execute()
 
 
-def process_response(response, date):
+def process_response(response):
   """stores the Analytics Reporting API V4 response"""
 
   for report in response.get('reports', []):
@@ -69,12 +69,14 @@ def process_response(response, date):
     metrics = {}
 
     for row in rows:
-      #dimensions = row.get('dimensions', [])
       dateRangeValues = row.get('metrics', [])
 
       for i, values in enumerate(dateRangeValues):
         for metricHeader, value in zip(metricHeaders, values.get('values')):
           metrics[metricHeader.get('name')] = value
+
+      for date in row.get('dimensions', []):
+        metrics['date'] = date
 
     if len(samplesReadCounts) == 0:
       metrics['sampled'] = 'no'
@@ -87,16 +89,17 @@ def main():
 
   analytics = initialize_analyticsreporting()
 
-  date_start = datetime.date(2016, 12, 23)
-  date_range = 10
+  date_start = datetime.date(2017, 1, 5)
+  date_range = 2
 
-  view_id = '102782120'
+  view_ids = ['89357101', '102782120', '88823264', '84826225']
 
-  for date in [date_start + datetime.timedelta(days=n) for n in range(0, date_range, 1)]:
-    print(date)
-    response = get_report(analytics, view_id, date.isoformat())
-    result = process_response(response, date.isoformat())
-    print(result)
+  for view_id in view_ids:
+    print(view_id)
+    for date in [date_start + datetime.timedelta(days=n) for n in range(0, date_range, 1)]:
+      response = get_report(analytics, view_id, date.isoformat())
+      result = process_response(response)
+      print(result)
 
 if __name__ == '__main__':
   main()
