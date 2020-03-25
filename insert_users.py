@@ -1,56 +1,46 @@
-""" 사용자 추가 (Management API) """
-
-import argparse
+""" Insert Users (Management API) """
 
 from apiclient.discovery import build
 from oauth2client.service_account import ServiceAccountCredentials
 
 import httplib2
-from oauth2client import client
-from oauth2client import file
-from oauth2client import tools
 
-def get_service(api_name, api_version, scope, key_file_location,
-                service_account_email):
-  """Get a service that communicates to a Google API.
+def get_service(api_name, api_version, scopes, key_file_location):
+    """Get a service that communicates to a Google API.
 
-  Args:
-    api_name: The name of the api to connect to.
-    api_version: The api version to connect to.
-    scope: A list auth scopes to authorize for the application.
-    key_file_location: The path to a valid service account p12 key file.
-    service_account_email: The service account email address.
+    Args:
+        api_name: The name of the api to connect to.
+        api_version: The api version to connect to.
+        scopes: A list auth scopes to authorize for the application.
+        key_file_location: The path to a valid service account JSON key file.
 
-  Returns:
-    A service that is connected to the specified API.
-  """
+    Returns:
+        A service that is connected to the specified API.
+    """
 
-  credentials = ServiceAccountCredentials.from_p12_keyfile(
-    service_account_email, key_file_location, scopes=scope)
+    credentials = ServiceAccountCredentials.from_json_keyfile_name(
+            key_file_location, scopes=scopes)
 
-  http = credentials.authorize(httplib2.Http())
+    # Build the service object.
+    service = build(api_name, api_version, credentials=credentials)
 
-  # Build the service object.
-  service = build(api_name, api_version, http=http)
-
-  return service
+    return service
 
 def main():
   # Define the auth scopes to request.
-  #scope = ['https://www.googleapis.com/auth/analytics.readonly']
   scope = ['https://www.googleapis.com/auth/analytics.manage.users']
 
-  # Use the developer console and replace the values with your
-  # service account email and relative location of your key file.
-  service_account_email = '[SERVICE_ACCOUNT_EMAIL]@developer.gserviceaccount.com'
-  key_file_location = './client_secrets.p12'
+  # key file
+  key_file_location = './client_secrets.json'
 
   # Authenticate and construct service.
-  service = get_service('analytics', 'v3', scope, key_file_location,
-    service_account_email)
+  service = get_service('analytics', 'v3', scope, key_file_location)
 
-  # 권한 부여할 이메일 주소 리스트
-  user_list = ['[EMAIL-1]@gmail.com', '[EMAIL-2]@gmail.com']
+  # user list
+  user_list = [
+               '[EMAIL_1]@gmail.com', \
+               '[EMAIL_2]@gmail.com'
+               ]
 
   try:
 
@@ -77,7 +67,7 @@ def main():
       service.management().profileUserLinks().insert(
           accountId='10587421',
           webPropertyId='UA-10587421-2',
-          profileId='87855026',
+          profileId='102782120',
           body={
               'permissions': {
                   'local': [
@@ -109,7 +99,7 @@ def main():
           }
       ).execute()
 
-      # PC Web LONG
+      # PC Web
       service.management().profileUserLinks().insert(
           accountId='10587421',
           webPropertyId='UA-10587421-2',
@@ -127,14 +117,27 @@ def main():
           }
       ).execute()
 
-  except TypeError, error:
+      # Master
+      service.management().profileUserLinks().insert(
+          accountId='10587421',
+          webPropertyId='UA-10587421-2',
+          profileId='163731114',
+          body={
+              'permissions': {
+                  'local': [
+                      'COLLABORATE',
+                      'READ_AND_ANALYZE'
+                  ]
+              },
+              'userRef': {
+                  'email': user
+              }
+          }
+      ).execute()
+
+  except error:
     # Handle errors in constructing a query.
     print('There was an error in constructing your query : %s' % error)
 
-  except HttpError, error:
-    # Handle API errors.
-    print('There was an API error : %s : %s' % (error.resp.status, error.resp.reason))
-
 if __name__ == '__main__':
   main()
-
